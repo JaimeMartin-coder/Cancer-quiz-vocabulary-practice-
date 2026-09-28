@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cell Cycle & Cancer: Practice Quiz</title>
+<style>
+  :root{
+    --navy:#1b2a4a;
+    --teal:#1e7a72;
+    --teal-dark:#155a54;
+    --red:#b3261e;
+    --green:#1e7a34;
+    --bg:#f4f6f8;
+    --card:#ffffff;
+    --border:#d7dde3;
+    --text:#20262e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: 'Segoe UI', Verdana, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display:flex;
+    justify-content:center;
+    padding: 24px 12px 60px;
+  }
+  .wrap{ width:100%; max-width:640px; }
+  header{ text-align:center; margin-bottom:18px; }
+  header h1{ font-size:1.4rem; color:var(--navy); margin:0 0 4px; }
+  header p{ margin:0; color:#55606b; font-size:0.95rem; }
+  .progress-track{
+    background:#e0e5ea; border-radius:20px; height:14px;
+    overflow:hidden; margin:14px 0 6px; border:1px solid var(--border);
+  }
+  .progress-fill{
+    height:100%; background: linear-gradient(90deg, var(--teal), var(--navy));
+    width:0%; transition: width 0.35s ease;
+  }
+  .progress-label{
+    display:flex; justify-content:space-between; font-size:0.8rem;
+    color:#55606b; margin-bottom:10px;
+  }
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:22px 20px; box-shadow: 0 2px 6px rgba(20,30,50,0.06);
+  }
+  .qtype{
+    display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.05em;
+    text-transform:uppercase; color: var(--teal-dark); background:#e5f2f0;
+    border:1px solid #bcdbd6; padding:3px 9px; border-radius:20px; margin-bottom:12px;
+  }
+  .question{ font-size:1.08rem; line-height:1.5; margin-bottom:16px; color:var(--navy); }
+  .options{ display:flex; flex-direction:column; gap:10px; margin-bottom:6px; }
+  .opt-btn{
+    text-align:left; padding:12px 14px; border-radius:8px; border:1.5px solid var(--border);
+    background:#fbfcfd; font-size:1rem; cursor:pointer; color:var(--text);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .opt-btn:hover:not(:disabled){ border-color: var(--teal); background:#eef7f6; }
+  .opt-btn:disabled{ cursor:default; }
+  .opt-btn.correct{ background:#e6f4e8; border-color: var(--green); color: var(--green); font-weight:600; }
+  .opt-btn.incorrect{ background:#fbeaea; border-color: var(--red); color: var(--red); font-weight:600; }
+
+  /* Drag and drop: ordering */
+  .order-list{ list-style:none; margin:0 0 10px; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .order-item{
+    padding:12px 14px; border-radius:8px; border:1.5px solid var(--border);
+    background:#fbfcfd; cursor:grab; display:flex; align-items:center; gap:10px;
+    user-select:none;
+  }
+  .order-item .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%; background:var(--navy); color:#fff;
+    font-size:0.75rem; font-weight:700; flex-shrink:0;
+  }
+  .order-item.dragging{ opacity:0.4; }
+  .order-item.correct-pos{ border-color:var(--green); background:#e6f4e8; }
+  .order-item.wrong-pos{ border-color:var(--red); background:#fbeaea; }
+
+  /* Drag and drop: matching */
+  .match-wrap{ display:flex; gap:16px; margin-bottom:6px; }
+  .match-col{ flex:1; display:flex; flex-direction:column; gap:8px; }
+  .match-col h4{ margin:0 0 2px; font-size:0.8rem; color:#6b757f; text-transform:uppercase; letter-spacing:0.04em; }
+  .term-chip{
+    padding:10px 12px; border-radius:8px; border:1.5px solid var(--border);
+    background:#fbfcfd; cursor:grab; font-size:0.92rem; text-align:center;
+  }
+  .term-chip.selected{ border-color:var(--teal); background:#eef7f6; }
+  .term-chip.placed{ opacity:0.35; cursor:default; }
+  .def-slot{
+    padding:10px 12px; border-radius:8px; border:1.5px dashed var(--border);
+    background:#fbfcfd; font-size:0.88rem; min-height:52px; display:flex; align-items:center;
+  }
+  .def-slot .def-text{ flex:1; }
+  .def-slot .placed-term{
+    font-weight:700; color:var(--navy); background:#e9edf3; border-radius:6px;
+    padding:4px 8px; margin-right:8px; font-size:0.85rem;
+  }
+  .def-slot.over{ border-color:var(--teal); background:#eef7f6; }
+  .def-slot.correct{ border-style:solid; border-color:var(--green); background:#e6f4e8; }
+  .def-slot.incorrect{ border-style:solid; border-color:var(--red); background:#fbeaea; }
+
+  .action-row{ display:flex; gap:10px; margin-top:6px; }
+  .submit-btn{
+    padding:12px 18px; font-size:1rem; font-weight:600; background:var(--navy);
+    color:#fff; border:none; border-radius:8px; cursor:pointer;
+  }
+  .submit-btn:disabled{ opacity:0.5; cursor:default; }
+  .feedback{ min-height:26px; margin-top:10px; font-size:0.95rem; font-weight:600; }
+  .feedback.correct{ color:var(--green); }
+  .feedback.incorrect{ color:var(--red); }
+  .hint{ font-size:0.85rem; color:#6b757f; margin-top:2px; margin-bottom:10px; }
+  .next-btn{
+    margin-top:16px; width:100%; padding:12px; font-size:1rem; font-weight:700;
+    background:var(--teal); color:#fff; border:none; border-radius:8px; cursor:pointer; display:none;
+  }
+  .next-btn.show{ display:block; }
+  .done-screen{ text-align:center; }
+  .done-screen h2{ color:var(--navy); }
+  .done-screen .big{ font-size:2.4rem; font-weight:700; color:var(--teal-dark); margin:10px 0; }
+  .restart-btn{
+    margin-top:18px; padding:12px 20px; font-size:1rem; font-weight:600;
+    background:var(--navy); color:#fff; border:none; border-radius:8px; cursor:pointer;
+  }
+  @media (max-width:420px){
+    .match-wrap{ gap:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cell Cycle &amp; Cancer</h1>
+    <p>Practice Quiz &mdash; get each question right to move on</p>
+  </header>
+
+  <div class="progress-label">
+    <span id="progressText">Question 1 of 25</span>
+    <span id="scoreText">Missed on first try: 0</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div class="card" id="quizCard"></div>
+</div>
+
+<script>
+// ---- Question bank (drawn from Cancer Quiz Practice + LT 2.2 Cancer Quiz) ----
+// types: "mc", "tf", "order" (drag to sequence), "match" (drag term to definition)
+const questions = [
+  { type:"mc", q:"Cancer is best defined as:", options:["Uncontrolled cell division","Any lump found in the body","The normal repair of damaged tissue","A protein that starts mitosis"], correct:"Uncontrolled cell division" },
+  { type:"tf", q:"True or False: Uncontrolled cell division or uncontrolled mitosis is called cancer.", correct:"True" },
+  { type:"mc", q:"Errors in DNA are called:", options:["Enzymes","Mutations","Carcinogens","Chromosomes"], correct:"Mutations" },
+  { type:"tf", q:"True or False: Errors in DNA can be caused by exposure to a carcinogen.", correct:"True" },
+  { type:"mc", q:"A substance capable of causing cancer in living tissue or cells is called a:", options:["Mutation","Carcinogen","Oncogene","Biopsy"], correct:"Carcinogen" },
+  { type:"tf", q:"True or False: Smoking, radiation, and pollution can all act as carcinogens.", correct:"True" },
+  { type:"mc", q:"When cancer spreads from one area of the body to another, this process is called:", options:["Remission","Diagnosis","Metastasis","Mutation"], correct:"Metastasis" },
+  { type:"mc", q:"Metastasize means:", options:["Uncontrolled cell division","When a tumor of cancerous cells spreads to the rest of the body","A mass of cancerous cells","Proteins that regulate mitosis"], correct:"When a tumor of cancerous cells spreads to the rest of the body" },
+  { type:"mc", q:"A tumor is:", options:["A single cancerous cell","A mass of cells","The spread of cancer through the bloodstream","A checkpoint in the cell cycle"], correct:"A mass of cells" },
+  { type:"mc", q:"A benign tumor is:", options:["A group of harmful cancer cells","A tumor that has spread to other organs","A group of cells growing abnormally, but not harmful","A cell that has stopped dividing"], correct:"A group of cells growing abnormally, but not harmful" },
+  { type:"tf", q:"True or False: A benign tumor can invade nearby tissue and spread to other parts of the body.", correct:"False" },
+  { type:"mc", q:"Malignant describes:", options:["A tumor that stays in one place and is harmless","A group of harmful cancer cells","The resting stage of the cell cycle","An enzyme that stops cell division"], correct:"A group of harmful cancer cells" },
+  { type:"tf", q:"True or False: A malignant tumor is considered cancerous.", correct:"True" },
+  { type:"mc", q:"The special group of proteins that regulate mitosis and virtually every body process are called:", options:["Genes","Enzymes","Carcinogens","Chromosomes"], correct:"Enzymes" },
+  { type:"mc", q:"Cell cycle enzymes are:", options:["Proteins that regulate mitosis/the cell cycle","Cells that grow abnormally","The DNA copied during S phase","Harmful cells that form tumors"], correct:"Proteins that regulate mitosis/the cell cycle" },
+  { type:"mc", q:"A normal, healthy cell spends most of its time in which phase?", options:["Mitosis","Interphase","Cytokinesis","Metaphase"], correct:"Interphase" },
+  { type:"tf", q:"True or False: A tissue sample with far more cells in mitosis than in interphase is more likely to be cancerous.", correct:"True" },
+  { type:"mc", q:"The final splitting of the cytoplasm at the end of cell division is called:", options:["Mitosis","Interphase","Cytokinesis","Metastasis"], correct:"Cytokinesis" },
+  { type:"tf", q:"True or False: Some cancers are caused by genetics.", correct:"True" },
+  { type:"tf", q:"True or False: Some cancers are caused by oxygen.", correct:"False" },
+  { type:"mc", q:"Which of the following is NOT a cause of cancer?", options:["Running","Drugs","Bad diet","Sunlight"], correct:"Running" },
+  { type:"mc", q:"Which of the following is a strategy for preventing cancer?", options:["Healthy diet","Sunblock","No smoking","All of the above"], correct:"All of the above" },
+  { type:"mc", q:"Pollution, diet, disease, and amount of sunlight are all examples of what?", options:["Genetic influence","Environmental factors","Probability","Cell cycle regulation"], correct:"Environmental factors" },
+  { type:"order", q:"Drag the steps into the correct order that cancer develops in the body (first to last):",
+    steps:[
+      "A mutagen/carcinogen damages a cell's DNA and genes.",
+      "The damaged gene that codes for an enzyme causes that enzyme to no longer control mitosis.",
+      "Cells begin dividing uncontrollably, leading to a cancerous mass of cells called a tumor.",
+      "If the tumor is malignant, the cancer cells spread through the body — this is called metastasis."
+    ]
+  },
+  { type:"match", q:"Drag each term to match its correct definition:",
+    terms:[
+      { term:"Oncologist", def:"A doctor who has special training in diagnosing and treating cancer." },
+      { term:"Biopsy", def:"The removal of cells or tissue for examination under a microscope." },
+      { term:"Remission", def:"A decrease in or disappearance of the signs and symptoms of cancer." },
+      { term:"Diagnosis", def:"The process of identifying a disease, condition, or injury from its signs and symptoms." }
+    ]
+  }
+];
+
+const TOTAL = questions.length;
+let current = 0;
+let missedFirstTry = 0;
+let firstAttemptDone = false;
+
+const quizCard = document.getElementById('quizCard');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const scoreText = document.getElementById('scoreText');
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateProgress(){
+  progressText.textContent = `Question ${Math.min(current+1, TOTAL)} of ${TOTAL}`;
+  scoreText.textContent = `Missed on first try: ${missedFirstTry}`;
+  progressFill.style.width = `${(current / TOTAL) * 100}%`;
+}
+
+function logFirstAttempt(isCorrect){
+  if(!firstAttemptDone){
+    firstAttemptDone = true;
+    if(!isCorrect) missedFirstTry++;
+    updateProgress();
+  }
+}
+
+function showNext(){
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.classList.add('show');
+  nextBtn.onclick = () => {
+    current++;
+    if(current >= TOTAL){ renderDone(); } else { renderQuestion(); }
+  };
+}
+
+function renderQuestion(){
+  firstAttemptDone = false;
+  updateProgress();
+  const item = questions[current];
+
+  if(item.type === 'mc') renderMC(item);
+  else if(item.type === 'tf') renderTF(item);
+  else if(item.type === 'order') renderOrder(item);
+  else if(item.type === 'match') renderMatch(item);
+}
+
+// ---------- Multiple Choice ----------
+function renderMC(item){
+  const opts = shuffle(item.options);
+  let html = `<div class="qtype">Multiple Choice</div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="optionsWrap">`;
+  opts.forEach(opt => {
+    html += `<button class="opt-btn" data-value="${escapeHtml(opt)}">${escapeHtml(opt)}</button>`;
+  });
+  html += `</div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">Next Question &rarr;</button>`;
+  quizCard.innerHTML = html;
+
+  document.querySelectorAll('#optionsWrap .opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleChoice(btn, item.correct));
+  });
+}
+
+// ---------- True / False ----------
+function renderTF(item){
+  let html = `<div class="qtype">True / False</div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="optionsWrap">
+      <button class="opt-btn" data-value="True">True</button>
+      <button class="opt-btn" data-value="False">False</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">Next Question &rarr;</button>`;
+  quizCard.innerHTML = html;
+
+  document.querySelectorAll('#optionsWrap .opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleChoice(btn, item.correct));
+  });
+}
+
+function handleChoice(btn, correctValue){
+  const feedback = document.getElementById('feedback');
+  const value = btn.getAttribute('data-value');
+  const isCorrect = value === correctValue;
+  logFirstAttempt(isCorrect);
+
+  if(isCorrect){
+    btn.classList.add('correct');
+    document.querySelectorAll('#optionsWrap .opt-btn').forEach(b => b.disabled = true);
+    feedback.textContent = "Correct! Nice work.";
+    feedback.className = "feedback correct";
+    showNext();
+  } else {
+    btn.classList.add('incorrect');
+    btn.disabled = true;
+    feedback.textContent = "Not quite — try one of the other options.";
+    feedback.className = "feedback incorrect";
+  }
+}
+
+// ---------- Drag-to-order ----------
+function renderOrder(item){
+  let order = shuffle(item.steps);
+  while(order.every((s,i) => s === item.steps[i])){
+    order = shuffle(item.steps);
+  }
+
+  let html = `<div class="qtype">Drag to Order</div>
+    <div class="question">${item.q}</div>
+    <ul class="order-list" id="orderList"></ul>
+    <div class="action-row">
+      <button class="submit-btn" id="checkOrderBtn">Check Order</button>
+    </div>
+    <div class="hint">Drag items to reorder them (or tap an item to move it up one spot).</div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">Next Question &rarr;</button>`;
+  quizCard.innerHTML = html;
+
+  const list = document.getElementById('orderList');
+  let dragSrcIndex = null;
+
+  function draw(){
+    list.innerHTML = '';
+    order.forEach((step, i) => {
+      const li = document.createElement('li');
+      li.className = 'order-item';
+      li.draggable = true;
+      li.dataset.index = i;
+      li.innerHTML = `<span class="num">${i+1}</span><span>${escapeHtml(step)}</span>`;
+
+      li.addEventListener('dragstart', (e) => {
+        dragSrcIndex = i;
+        li.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      li.addEventListener('dragend', () => li.classList.remove('dragging'));
+      li.addEventListener('dragover', (e) => e.preventDefault());
+      li.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetIndex = parseInt(li.dataset.index, 10);
+        if(dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+        const moved = order.splice(dragSrcIndex, 1)[0];
+        order.splice(targetIndex, 0, moved);
+        dragSrcIndex = null;
+        draw();
+      });
+      li.addEventListener('click', () => {
+        if(i > 0){
+          [order[i-1], order[i]] = [order[i], order[i-1]];
+          draw();
+        }
+      });
+      li.title = "Drag to reorder, or click to move this item up.";
+      list.appendChild(li);
+    });
+  }
+  draw();
+
+  document.getElementById('checkOrderBtn').addEventListener('click', () => {
+    const feedback = document.getElementById('feedback');
+    const isCorrect = order.every((s,i) => s === item.steps[i]);
+    logFirstAttempt(isCorrect);
+
+    const items = list.querySelectorAll('.order-item');
+    items.forEach((li, i) => {
+      li.classList.remove('correct-pos','wrong-pos');
+      li.classList.add(order[i] === item.steps[i] ? 'correct-pos' : 'wrong-pos');
+    });
+
+    if(isCorrect){
+      feedback.textContent = "Correct order! Nice work.";
+      feedback.className = "feedback correct";
+      document.getElementById('checkOrderBtn').disabled = true;
+      list.querySelectorAll('.order-item').forEach(li => li.draggable = false);
+      showNext();
+    } else {
+      feedback.textContent = "Not quite yet — green steps are in the right spot, red steps need to move.";
+      feedback.className = "feedback incorrect";
+    }
+  });
+}
+
+// ---------- Drag-to-match ----------
+function renderMatch(item){
+  const terms = shuffle(item.terms.map(t => t.term));
+  const defs = shuffle(item.terms);
+  const placements = {}; // def -> placed term value
+
+  let html = `<div class="qtype">Drag to Match</div>
+    <div class="question">${item.q}</div>
+    <div class="match-wrap">
+      <div class="match-col">
+        <h4>Terms</h4>
+        <div id="termPool"></div>
+      </div>
+      <div class="match-col">
+        <h4>Definitions</h4>
+        <div id="defPool"></div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="submit-btn" id="checkMatchBtn">Check Matches</button>
+    </div>
+    <div class="hint">Drag a term onto its matching definition, or tap a term then tap the definition.</div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">Next Question &rarr;</button>`;
+  quizCard.innerHTML = html;
+
+  const termPool = document.getElementById('termPool');
+  const defPool = document.getElementById('defPool');
+  let selectedTerm = null;
+
+  function drawTerms(){
+    termPool.innerHTML = '';
+    terms.forEach(term => {
+      const isPlaced = Object.values(placements).includes(term);
+      const chip = document.createElement('div');
+      chip.className = 'term-chip' + (isPlaced ? ' placed' : '');
+      chip.textContent = term;
+      chip.draggable = !isPlaced;
+      chip.dataset.term = term;
+
+      if(!isPlaced){
+        chip.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', term);
+        });
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('.term-chip').forEach(c => c.classList.remove('selected'));
+          selectedTerm = term;
+          chip.classList.add('selected');
+        });
+      }
+      termPool.appendChild(chip);
+    });
+  }
+
+  function drawDefs(){
+    defPool.innerHTML = '';
+    defs.forEach(pair => {
+      const slot = document.createElement('div');
+      slot.className = 'def-slot';
+      slot.dataset.def = pair.def;
+      slot.dataset.correctTerm = pair.term;
+
+      const placedTerm = placements[pair.def];
+      slot.innerHTML = placedTerm
+        ? `<span class="placed-term">${escapeHtml(placedTerm)}</span><span class="def-text">${escapeHtml(pair.def)}</span>`
+        : `<span class="def-text">${escapeHtml(pair.def)}</span>`;
+
+      slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.classList.add('over'); });
+      slot.addEventListener('dragleave', () => slot.classList.remove('over'));
+      slot.addEventListener('drop', (e) => {
+        e.preventDefault();
+        slot.classList.remove('over');
+        const term = e.dataTransfer.getData('text/plain');
+        if(term){ placements[pair.def] = term; drawTerms(); drawDefs(); }
+      });
+      slot.addEventListener('click', () => {
+        if(selectedTerm){
+          placements[pair.def] = selectedTerm;
+          selectedTerm = null;
+          drawTerms();
+          drawDefs();
+        }
+      });
+      defPool.appendChild(slot);
+    });
+  }
+
+  drawTerms();
+  drawDefs();
+
+  document.getElementById('checkMatchBtn').addEventListener('click', () => {
+    const feedback = document.getElementById('feedback');
+    const defSlots = defPool.querySelectorAll('.def-slot');
+    let allCorrect = true;
+    let anyPlaced = false;
+
+    defSlots.forEach(slot => {
+      const def = slot.dataset.def;
+      const correctTerm = slot.dataset.correctTerm;
+      const placedTerm = placements[def];
+      slot.classList.remove('correct','incorrect');
+      if(placedTerm){
+        anyPlaced = true;
+        if(placedTerm === correctTerm){
+          slot.classList.add('correct');
+        } else {
+          slot.classList.add('incorrect');
+          allCorrect = false;
+          delete placements[def];
+        }
+      } else {
+        allCorrect = false;
+      }
+    });
+
+    const isCorrect = allCorrect && anyPlaced;
+    logFirstAttempt(isCorrect);
+
+    if(isCorrect){
+      feedback.textContent = "All matched correctly! Nice work.";
+      feedback.className = "feedback correct";
+      document.getElementById('checkMatchBtn').disabled = true;
+      showNext();
+    } else {
+      feedback.textContent = "Some matches aren't right yet — green definitions are correct, red ones were sent back to the term list.";
+      feedback.className = "feedback incorrect";
+      drawTerms();
+      drawDefs();
+      setTimeout(() => {
+        defPool.querySelectorAll('.def-slot').forEach(slot => {
+          const def = slot.dataset.def;
+          const correctTerm = slot.dataset.correctTerm;
+          if(placements[def] === correctTerm) slot.classList.add('correct');
+        });
+      }, 0);
+    }
+  });
+}
+
+// ---------- Done screen ----------
+function renderDone(){
+  progressFill.style.width = `100%`;
+  progressText.textContent = `Question ${TOTAL} of ${TOTAL}`;
+  scoreText.textContent = `Missed on first try: ${missedFirstTry}`;
+  const correctFirstTry = TOTAL - missedFirstTry;
+  quizCard.innerHTML = `
+    <div class="done-screen">
+      <h2>Quiz Complete!</h2>
+      <div class="big">${correctFirstTry} / ${TOTAL}</div>
+      <p>questions answered correctly on the first try.</p>
+      <button class="restart-btn" id="restartBtn">Restart Quiz</button>
+    </div>`;
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    current = 0;
+    missedFirstTry = 0;
+    renderQuestion();
+  });
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
